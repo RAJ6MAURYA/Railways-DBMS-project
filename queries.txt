@@ -1,0 +1,47 @@
+create table stations(station_code Integer primary key,station_name varchar(20));
+
+create table train(train_no Integer primary key,train_name varchar(20),src integer ,dest Integer, seats int,foreign key(src) references stations(station_code) on delete set null,foreign key(dest) references stations(station_code) on delete set null);
+
+create table passengers(PNR integer primary key,P_name varchar(20),DOJ DATE,Train_number Integer, reservation_status varchar(20),foreign key(Train_number) references train(train_no) on delete set null);
+
+create table payment_gateway (transaction_id integer,payment_mode varchar(20), payment_amount integer, PNR integer, foreign key(PNR) references passengers(PNR) on delete set null)
+
+insert into stations values(1,'Bangalore');
+insert into stations values(2,'Mumbai');
+insert into stations values(3,'Delhi');
+insert into stations values(4,'kolkata');
+insert into stations values(5,'Varanasi');
+
+insert into train values(10101,'Blr-Vns Exp',1,5,100);
+insert into train values(16271,'Del-Kol Exp',3,4,300);
+insert into train values(11324,'Bom-Kol Exp',2,4,90);
+insert into train values(14452,'Kol-Blr Exp',4,1,110);
+insert into train values(12108,'Vns-Bom Exp',5,1,120);
+
+insert into passengers values(1120,'Raj Maurya','19-AUG-2021',10101,'Confirmed');
+insert into passengers values(1121,'Kiran Maurya','17-FEB-2020',11324,'Waiting');
+insert into passengers values(1122,'Sapana Verma','7-JUN-2021',14452,'RAC');
+insert into passengers values(1123,'Simran Maurya','27-MAR-2020',12108,'Cancelled');
+insert into passengers values(1124,'Ajay Maurya','20-DEC-2021',16271,'Confirmed');
+
+insert into payment_gateway values(123451,'UPI',1245,1120);
+insert into payment_gateway values(784591,'Card',5487,1122);
+insert into payment_gateway values(854231,'Cash',1472,1121);
+insert into payment_gateway values(457846,'Net-Banking',3856,1124);
+insert into payment_gateway values(145236,'UPI',2001,1123);
+
+
+## queries
+
+1.get the information about the passengers who are travelling from bangalore to varanasi
+
+select P.* 
+From passengers p ,train T
+where p.train_number = T.train_no
+And T.src in (select S.station_code From stations S
+			 where station_name='Bangalore')
+AND T.dest in (select S.station_code From stations S
+			  where station_name='Varanasi')
+
+2. show the available trains to reach from bangalore to kolkata
+
