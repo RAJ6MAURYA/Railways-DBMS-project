@@ -1,5 +1,8 @@
 
 import psycopg2 as pg
+import tkinter as tk
+import PyPDF2
+from  PIL import Image, ImageTk
 import random
 
 #connection is established
@@ -11,6 +14,17 @@ con = pg.connect(host='localhost',
 
 #curser is created
 cur = con.cursor()
+
+
+def PNR_validation(PNR):
+    query = "Select * from passengers where PNR = "+PNR
+    cur.execute(query)
+    out = cur.fetchall()
+    if not out:
+        print("\n###################        NO RECORD IS FOUND | ENTER A VALID PNR       ##################################\n".center(80))
+        return False
+    else:
+        return True
 
 
 def payment_gateway(PNR):  # payment function to validate the payment
@@ -38,9 +52,8 @@ def View_Reservation(PNR):  # def to view the status of the reservation
     # select query to get the details of the passengers from PNR
     cur.execute(query)
     out = cur.fetchall()
-    if not out:
-        print("\n###################        NO RECORD IS FOUND | ENTER A VALID PNR       ##################################\n".center(80))
-        return "INVALID"
+    if(PNR_validation(PNR) == False):
+        return
     Heading = ["PNR", "NAME", "DATE", "TRAIN NO", "STATUS"]
     print(end="\n")
     for i in Heading:
@@ -55,7 +68,7 @@ def View_Reservation(PNR):  # def to view the status of the reservation
 # definition to cancel the perticular reservation from passengers entity
 def Cancel_Reservation(PNR):
     print("\nPresent status\n")
-    if View_Reservation(PNR) == "INVALID":
+    if View_Reservation(PNR) == False:
         return
     string = "Update passengers set reservation_status = 'Cancelled' where PNR ="+PNR
     cur.execute(string)  # update query to cancel the ticket
@@ -120,7 +133,7 @@ def user():
 def admin():
     while(True):
         ch = int(input(
-            "\n1.Passengers details\t2.Train details\t3.Payment History\t4.Station details\t5.EXIT\nEnter: "))
+            "\n1.Passengers details\t2.Train details\t 3.Payment History\t4.Station details\t5.EXIT\nEnter: "))
         if(ch == 1):
             ich = int(
                 input("1.View the details\t2.Update the details\t3.Delete the details\n"))
@@ -143,6 +156,8 @@ def admin():
                 print(end="\n")
             if(ich == 2):
                 PNR = input("Enter the PNR: ")
+                if PNR_validation(PNR) == False:
+                    continue
                 Name = input("\nEnter your name: ")
                 Available_Trains()
                 Train_Number = input("\nEnter the Train number: ")
@@ -154,10 +169,15 @@ def admin():
                 con.commit()
                 View_Reservation(PNR)
             if(ich == 3):
-                PNR = input("\nEnter the PNR")
-                query = "Delete from passenger where pnr="+PNR
-                cur.execute(query)
+                PNR = input("\nEnter the PNR: ")
+                if PNR_validation(PNR) == False:
+                    continue
+                query = "Delete from passengers where pnr="+PNR
                 View_Reservation(PNR)
+                print("The Entry is deleted\n")
+                cur.execute(query)
+                con.commit()
+
         if(ch == 2):
             Available_Trains()
         if(ch == 3):
@@ -191,17 +211,20 @@ def admin():
             break
 
 
+
 # driver code
 print("Welcome to the DataBase Managemet System".center(80))
 ch = int(input("1.Admin\t2.User"))
+
 if(ch == 1):
     password = input("Enter the password: ")
     if(password == "Raj123"):
         admin()
+    else:
+        print("###################################  Invalid Password        #########################################")
 elif(ch == 2):
     user()
 else:
     print("#######################################      Invalid Choice       ########################################")
-
 cur.close()
 con.close()
